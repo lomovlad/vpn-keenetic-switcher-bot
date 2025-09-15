@@ -281,4 +281,3 @@ function buildDevicesKeyboard(array $devices): array
     }
     return $keyboard;
 }
-
