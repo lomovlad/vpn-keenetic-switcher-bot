@@ -26,12 +26,9 @@ class Service
 
         $devices = $this->keenetic->getDevices();
 
-        # Обработка текста собщения
-
-
         # Обработка нажатий кнопки
         if ($update->callbackQuery !== null) {
-            $chaId = $update->callbackQuery->message->chat->id;
+            $chatId = $update->callbackQuery->message->chat->id;
 
             $mac = $update->callbackQuery->data;
 
@@ -45,15 +42,16 @@ class Service
                 ? "Политика для устройства {$mac} изменена на {$newPolicy}"
                 : "Не удалось изменить политику";
 
-            $this->tg->answerCallbackQuery(
+            $this->tg->getBotApi()->answerCallbackQuery(
                 callbackQueryId: $update->callbackQuery->id,
                 text: $alert,
-                show_alert: true
+                showAlert: true
             );
 
             return;
         }
 
+        # Обработка текста собщения
         if ($update->message !== null) {
             $messageText = $update->message->text;
             $chatId = $update->message->chat->id;
@@ -71,13 +69,13 @@ class Service
                     ];
                 }
 
-                $this->tg->sendMessage(
+                $this->tg->getBotApi()->sendMessage(
                     chatId: $chatId,
                     text: '',
-                    reply_markup: new InlineKeyboardMarkup($buttons)
+                    replyMarkup: new InlineKeyboardMarkup($buttons)
                 );
             } else {
-                $this->tg->sendMessage(
+                $this->tg->getBotApi()->sendMessage(
                     chatId: $chatId,
                     text: 'Вызови /start'
                 );
