@@ -34,4 +34,9 @@ class Telegram
             return null;
         }
     }
+
+    public function getBotApi(): TelegramBotApi
+    {
+        return $this->botApi;
+    }
 }
