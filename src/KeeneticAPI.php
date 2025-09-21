@@ -18,7 +18,14 @@ class KeeneticAPI
     private string $password;
     private CookieJar $jar;
     private Client $httpClient;
-    private array $favDevicesMacs;
+    private const FAV_DEVICES_MACS = [
+        'ce:7b:6f:65:fd:6e',
+        '46:36:fe:b5:de:d8',
+        '90:de:80:21:c7:bc',
+        'd8:43:ae:0f:45:5d',
+        '8c:c8:4b:d6:0c:eb',
+        '3e:ad:a3:77:51:0d'
+    ];
 
     /**
      * @param string $baseUri
@@ -38,15 +45,6 @@ class KeeneticAPI
             'verify' => false,
             'http_errors' => false
         ]);
-
-        $this->favDevicesMacs = [
-            'ce:7b:6f:65:fd:6e',
-            '46:36:fe:b5:de:d8',
-            '90:de:80:21:c7:bc',
-            'd8:43:ae:0f:45:5d',
-            '8c:c8:4b:d6:0c:eb',
-            '3e:ad:a3:77:51:0d'
-        ];
     }
 
     /**
@@ -119,7 +117,7 @@ class KeeneticAPI
 
     /**
      * Получить полный список устройств из роутера
-     * @return array ассоциативный масиив [[mac => [name, policy]]]
+     * @return array<string, array{name: string, policy: string}>
      * @throws GuzzleException
      */
 
@@ -191,7 +189,7 @@ class KeeneticAPI
     /**
      * Возвращает список избранных устройств из полного массива устройств.
      *  Метод фильтрует переданный массив `$devices`, оставляя только устройства,
-     *  MAC-адреса которых входят в заранее определённый список избранных (`$favDevicesMacs`).
+     *  MAC-адреса которых входят в заранее определённый список избранных (FAV_DEVICES_MACS).
      *
      * @param array $devices
      * @return array
@@ -200,7 +198,7 @@ class KeeneticAPI
     {
         $result = [];
 
-        foreach ($this->favDevicesMacs as $mac) {
+        foreach (self::FAV_DEVICES_MACS as $mac) {
             if (isset($devices[$mac])) {
                 $result[$mac] = $devices[$mac];
             }
