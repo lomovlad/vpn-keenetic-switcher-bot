@@ -6,8 +6,9 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Service;
 use App\KeeneticAPI;
-use App\Telegram;
+use App\Storage;
 use Dotenv\Dotenv;
+use Vjik\TelegramBot\Api\TelegramBotApi;
 
 $dotenv = Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
@@ -17,9 +18,8 @@ $login = getenv('ROUTE_LOGIN');
 $password = getenv('ROUTE_PASS');
 $tgToken = getenv('TOKEN_TELEGRAM');
 
-$service = new Service(
+new Service(
     new KeeneticAPI($baseUri, $login, $password),
-    new Telegram($tgToken)
-);
-
-$service->handle();
+    new TelegramBotApi($tgToken),
+    new Storage()
+)->handle();

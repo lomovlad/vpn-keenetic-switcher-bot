@@ -5,17 +5,36 @@ declare(strict_types=1);
 namespace App;
 
 use GuzzleHttp\Exception\GuzzleException;
+use Vjik\TelegramBot\Api\ParseResult\TelegramParseResultException;
+use Vjik\TelegramBot\Api\TelegramBotApi;
 use Vjik\TelegramBot\Api\Type\InlineKeyboardButton;
 use Vjik\TelegramBot\Api\Type\InlineKeyboardMarkup;
+use Vjik\TelegramBot\Api\Type\Update\Update;
 
 class Service
 {
     public function __construct(
         private KeeneticApi $keenetic,
-        private Telegram    $tg
+        private TelegramBotApi $tg,
+        private StorageInterface $storage
     )
     {
         $this->keenetic->auth();
+    }
+
+    public function getUpdate(): ?Update
+    {
+        $input = file_get_contents('php://input');
+
+        if (!$input) {
+            return null;
+        }
+
+        try {
+            return Update::fromJson($input);
+        } catch (TelegramParseResultException) {
+            return null;
+        }
     }
 
     /**
@@ -30,7 +49,7 @@ class Service
      */
     public function handle(): void
     {
-        $update = $this->tg->getUpdate();
+        $update = $this->getUpdate();
 
         if ($update === null) {
             return;
@@ -41,12 +60,11 @@ class Service
 
         if ($update->callbackQuery !== null) {
             $this->handleCallbackQuery($update->callbackQuery, $favDevices);
+
             return;
         }
 
-        if ($update->message !== null) {
-            $this->handleMessage($update->message, $favDevices);
-        }
+        $this->handleMessage($update->message, $favDevices);
     }
 
     /**
@@ -87,7 +105,7 @@ class Service
         $this->tg->editMessageReplyMarkup(
             chatId: $chatId,
             messageId: $messageId,
-            markup: new InlineKeyboardMarkup($buttons)
+            replyMarkup: new InlineKeyboardMarkup($buttons)
         );
 
         $alert = $success
@@ -115,7 +133,7 @@ class Service
     {
         $chatId = $message->chat->id;
         $messageText = $message->text;
-        $storage = $this->tg->loadStorage();
+        $storage = $this->storage->loadStorage();
         $lastMessageId = $storage['users'][$chatId]['last_message_id'] ?? null;
 
         if ($lastMessageId) {
@@ -123,30 +141,38 @@ class Service
         }
 
         if ($messageText === '/start') {
-            $buttons = [];
-
-            foreach ($favDevices as $mac => $device) {
-                $emoji = $device['policy'] === 'Policy0' ? '🟢' : '⚪';
-                $buttons[] = [
-                    new InlineKeyboardButton(
-                        text: "{$device['name']} ($emoji)",
-                        callbackData: "{$mac}"
-                    )
-                ];
-            }
+            $buttons = $this->getDeviceButtons($favDevices);
 
             $newMessageId = $this->tg->sendMessage(
                 chatId: $chatId,
                 text: 'Выберите устройство:',
                 replyMarkup: new InlineKeyboardMarkup($buttons)
             );
-            $this->tg->updateStorage($chatId, ['last_message_id' => $newMessageId]);
+            $this->storage->updateStorage($chatId, ['last_message_id' => $newMessageId]);
         } else {
             $newMessageId = $this->tg->sendMessage(
                 chatId: $chatId,
                 text: 'Вызови /start'
             );
-            $this->tg->updateStorage($chatId, ['last_message_id' => $newMessageId]);
+            $this->storage->updateStorage($chatId, ['last_message_id' => $newMessageId]);
         }
+    }
+
+
+    private function getDeviceButtons(array $favDevices): array
+    {
+        $buttons = [];
+
+        foreach ($favDevices as $mac => $device) {
+            $emoji = $device['policy'] === 'Policy0' ? '🟢' : '⚪';
+            $buttons[] = [
+                new InlineKeyboardButton(
+                    text: "{$device['name']} ($emoji)",
+                    callbackData: (string) $mac
+                )
+            ];
+        }
+
+        return $buttons;
     }
 }
