@@ -18,7 +18,7 @@ class KeeneticAPI
     private string $password;
     private CookieJar $jar;
     private Client $httpClient;
-    private const FAV_DEVICES_MACS = [
+    private const array FAV_DEVICES_MACS = [
         'ce:7b:6f:65:fd:6e',
         '46:36:fe:b5:de:d8',
         '90:de:80:21:c7:bc',

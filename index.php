@@ -6,8 +6,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Service;
 use App\KeeneticAPI;
-use Vjik\TelegramBot\Api\TelegramBotApi;
-
+use App\Telegram;
 use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createUnsafeImmutable(__DIR__);
@@ -20,9 +19,7 @@ $tgToken = getenv('TOKEN_TELEGRAM');
 
 $service = new Service(
     new KeeneticAPI($baseUri, $login, $password),
-    new TelegramBotApi($tgToken)
+    new Telegram($tgToken)
 );
 
 $service->handle();
-
-//https://api.telegram.org/bot8464832937:AAHTrV3e7Jhc452eo2QwAHyKmBFevUq32QY/setWebhook?url=https://c405ea8220fa92ea17957d46333c6d14.serveo.net
