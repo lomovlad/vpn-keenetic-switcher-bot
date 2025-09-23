@@ -22,28 +22,30 @@ class Service
         $this->keenetic->auth();
     }
 
+    /**
+     * Получает входящий апдейт из Telegram.
+     * @return Update|null
+     */
     public function getUpdate(): ?Update
     {
         $input = file_get_contents('php://input');
 
         if (!$input) {
+
             return null;
         }
 
         try {
+
             return Update::fromJson($input);
         } catch (TelegramParseResultException) {
+
             return null;
         }
     }
 
     /**
-     * Обработчик входящих обновлений Telegram
-     *
-     * - Обрабатывает нажатия inline-кнопок и переключает политику устройств
-     * - Формирует inline-клавиатуру с любимыми устройствами
-     * - Добавляет эмодзи для отображения текущей политики
-     *
+     * Обрабатывает входящий апдейт (сообщение или callback).
      * @return void
      * @throws GuzzleException
      */
@@ -52,6 +54,7 @@ class Service
         $update = $this->getUpdate();
 
         if ($update === null) {
+
             return;
         }
 
@@ -68,10 +71,7 @@ class Service
     }
 
     /**
-     *  Обрабатывает нажатие на inline-кнопку.
-     *
-     *  Берёт chat_id и message_id из callbackQuery, меняет политику устройства
-     *  через Keenetic API, перерисовывает inline-клавиатуру и отправляет ответ пользователю.
+     * Обработка callback-запроса от Telegram (нажатие на inline-кнопку).
      * @param object $callbackQuery
      * @param array $favDevices
      * @return void
@@ -85,10 +85,7 @@ class Service
         $mac = $callbackQuery->data;
         $currentPolicy = $favDevices[$mac]['policy'] ?? 'default';
         $newPolicy = $currentPolicy === 'Policy0' ? 'default' : 'Policy0';
-
         $success = $this->keenetic->setPolicyDevice($mac, $newPolicy);
-
-        // Формируем кнопки заново с обновлёнными статусами
         $buttons = [];
 
         foreach ($favDevices as $macKey => $device) {
@@ -97,7 +94,7 @@ class Service
             $buttons[] = [
                 new InlineKeyboardButton(
                     text: "{$device['name']} ($emoji)",
-                    callbackData: "{$macKey}"
+                    callbackData: (string)$macKey
                 )
             ];
         }
@@ -120,11 +117,7 @@ class Service
     }
 
     /**
-     *  Обрабатывает обычное сообщение пользователя.
-     *
-     *  Если есть предыдущее сообщение бота для этого chat_id, удаляет его.
-     *  Затем отправляет новое сообщение (с inline-кнопками или текст "Вызови /start")
-     *  и сохраняет message_id в storage для дальнейшего удаления.
+     * Обработка входящего сообщения пользователя.
      * @param object $message
      * @param array $favDevices
      * @return void
@@ -132,33 +125,44 @@ class Service
     private function handleMessage(object $message, array $favDevices): void
     {
         $chatId = $message->chat->id;
-        $messageText = $message->text;
+        $text = $message->text ?? '';
+
+        // Получаем ID последнего сообщения бота
         $storage = $this->storage->loadStorage();
         $lastMessageId = $storage['users'][$chatId]['last_message_id'] ?? null;
 
+        // Удаляем предыдущее сообщение, если есть
         if ($lastMessageId) {
-            $this->tg->deleteMessage($chatId, $lastMessageId);
+            $this->tg->deleteMessage($chatId, (int)$lastMessageId);
         }
 
-        if ($messageText === '/start') {
+        // Отправляем новое сообщение
+        if ($text === '/start') {
             $buttons = $this->getDeviceButtons($favDevices);
-
-            $newMessageId = $this->tg->sendMessage(
+            $response = $this->tg->sendMessage(
                 chatId: $chatId,
                 text: 'Выберите устройство:',
                 replyMarkup: new InlineKeyboardMarkup($buttons)
             );
-            $this->storage->updateStorage($chatId, ['last_message_id' => $newMessageId]);
         } else {
-            $newMessageId = $this->tg->sendMessage(
+            $response = $this->tg->sendMessage(
                 chatId: $chatId,
                 text: 'Вызови /start'
             );
-            $this->storage->updateStorage($chatId, ['last_message_id' => $newMessageId]);
         }
+
+        // Берём ID из объекта Message
+        $newMessageId = $response->messageId;
+
+        // Сохраняем ID нового сообщения
+        $this->storage->updateStorage($chatId, ['last_message_id' => $newMessageId]);
     }
 
-
+    /**
+     * Генерирует кнопки для устройств.
+     * @param array $favDevices
+     * @return array
+     */
     private function getDeviceButtons(array $favDevices): array
     {
         $buttons = [];
@@ -168,7 +172,7 @@ class Service
             $buttons[] = [
                 new InlineKeyboardButton(
                     text: "{$device['name']} ($emoji)",
-                    callbackData: (string) $mac
+                    callbackData: (string)$mac
                 )
             ];
         }

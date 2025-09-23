@@ -15,54 +15,53 @@ class Storage implements StorageInterface
         '3e:ad:a3:77:51:0d'
     ];
 
+    private string $file;
+
+    public function __construct(string $file = __DIR__ . '/../storage.json')
+    {
+        $this->file = $file;
+    }
+
     /**
      * Загружает хранилище данных пользователей из JSON-файла.
-     * @param string $file
      * @return array{users: array<int, array{last_message_id?: int}>}
      */
-    public function loadStorage(string $file = 'storage.json'): array
+    public function loadStorage(): array
     {
-        if (!file_exists($file)) {
-
+        if (!file_exists($this->file)) {
             return ['users' => []];
         }
 
-        $data = json_decode(file_get_contents($file), true);
+        $data = json_decode(file_get_contents($this->file), true);
 
         return $data ?: ['users' => []];
     }
 
     /**
      * Сохраняет данные пользователей в JSON-файл.
-     * @param array $data Массив данных для сохранения
-     * @param string $file Путь к файлу хранения данных (по умолчанию 'storage.json')
+     * @param array $data
      * @return void
      */
-    public function saveStorage(array $data, string $file = 'storage.json'): void
+    public function saveStorage(array $data): void
     {
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents($this->file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
     /**
      * Обновляет данные пользователя в storage и сохраняет файл.
      * @param int $chatId
      * @param array $newData
-     * @param string $file
      * @return void
      */
-    public function updateStorage(int $chatId, array $newData, string $file = 'storage.json'): void
+    public function updateStorage(int $chatId, array $newData): void
     {
-        $storage = $this->loadStorage($file);
+        $storage = $this->loadStorage();
 
         if (!isset($storage['users'][$chatId])) {
             $storage['users'][$chatId] = [];
         }
 
-        $storage['users'][$chatId] = array_merge(
-            $storage['users'][$chatId],
-            $newData
-        );
-
-        $this->saveStorage($storage, $file);
+        $storage['users'][$chatId] = array_merge($storage['users'][$chatId], $newData);
+        $this->saveStorage($storage);
     }
 }

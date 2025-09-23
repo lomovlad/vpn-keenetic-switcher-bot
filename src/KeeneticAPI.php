@@ -12,7 +12,6 @@ use RuntimeException;
 
 class KeeneticAPI
 {
-
     private string $baseUri;
     private string $login;
     private string $password;
@@ -180,9 +179,9 @@ class KeeneticAPI
     /**
      * Возвращает список избранных устройств из полного массива устройств.
      *  Метод фильтрует переданный массив `$devices`, оставляя только устройства,
-     *  MAC-адреса которых входят в заранее определённый список избранных @see Storage::FAV_DEVICES_MACS
-     * @param array $devices
+     *  MAC-адреса которых входят в заранее определённый список избранных @param array $devices
      * @return array
+     * @see Storage::FAV_DEVICES_MACS
      */
     public function getFavDevices(array $devices): array
     {
