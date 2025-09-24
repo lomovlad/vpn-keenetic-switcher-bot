@@ -23,10 +23,10 @@ class Storage implements StorageInterface
     }
 
     /**
-     * Загружает хранилище данных пользователей из JSON-файла.
-     * @return array{users: array<int, array{last_message_id?: int}>}
+     *  Загружает JSON-файл
+     * @return array[]
      */
-    public function loadStorage(): array
+    private function loadStorage(): array
     {
         if (!file_exists($this->file)) {
             return ['users' => []];
@@ -38,22 +38,43 @@ class Storage implements StorageInterface
     }
 
     /**
-     * Сохраняет данные пользователей в JSON-файл.
+     * Сохраняет массив в JSON-файл
      * @param array $data
      * @return void
      */
-    public function saveStorage(array $data): void
+    private function saveStorage(array $data): void
     {
-        file_put_contents($this->file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents(
+            $this->file,
+            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
     }
 
     /**
-     * Обновляет данные пользователя в storage и сохраняет файл.
+     * @return array|string[]
+     */
+    public function getFavMacs(): array
+    {
+        return self::FAV_DEVICES_MACS;
+    }
+
+    /**
      * @param int $chatId
-     * @param array $newData
+     * @return int|null
+     */
+    public function getLastMessageId(int $chatId): ?int
+    {
+        $storage = $this->loadStorage();
+
+        return $storage['users'][$chatId]['last_message_id'] ?? null;
+    }
+
+    /**
+     * @param int $chatId
+     * @param int $messageId
      * @return void
      */
-    public function updateStorage(int $chatId, array $newData): void
+    public function setLastMessageId(int $chatId, int $messageId): void
     {
         $storage = $this->loadStorage();
 
@@ -61,7 +82,7 @@ class Storage implements StorageInterface
             $storage['users'][$chatId] = [];
         }
 
-        $storage['users'][$chatId] = array_merge($storage['users'][$chatId], $newData);
+        $storage['users'][$chatId]['last_message_id'] = $messageId;
         $this->saveStorage($storage);
     }
 }

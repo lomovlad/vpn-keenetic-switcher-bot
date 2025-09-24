@@ -134,6 +134,7 @@ class KeeneticAPI
 
             // Собираем массив MAC => name
             $namesByMac = [];
+
             foreach ($hostsNames as $host) {
                 $mac = $host['mac'] ?? null;
                 $name = $host['name'] ?? 'unknown';
@@ -171,27 +172,6 @@ class KeeneticAPI
 
         } catch (\Exception $e) {
             throw new \RuntimeException('Ошибка при получении устройств: ' . $e->getMessage());
-        }
-
-        return $result;
-    }
-
-    /**
-     * Возвращает список избранных устройств из полного массива устройств.
-     *  Метод фильтрует переданный массив `$devices`, оставляя только устройства,
-     *  MAC-адреса которых входят в заранее определённый список избранных @param array $devices
-     * @return array
-     * @see Storage::FAV_DEVICES_MACS
-     */
-    public function getFavDevices(array $devices): array
-    {
-        $favMacs = Storage::FAV_DEVICES_MACS;
-        $result = [];
-
-        foreach ($favMacs as $mac) {
-            if (isset($devices[$mac])) {
-                $result[$mac] = $devices[$mac];
-            }
         }
 
         return $result;

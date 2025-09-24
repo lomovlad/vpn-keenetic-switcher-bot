@@ -7,23 +7,23 @@ namespace App;
 interface StorageInterface
 {
     /**
-     * Загружает хранилище данных пользователей из JSON-файла.
-     * @return array{users: array<int, array{last_message_id?: int}>}
-     */
-    public function loadStorage(): array;
-
-    /**
-     * Обновляет данные пользователя в storage и сохраняет файл.
+     * Получает ID последнего сообщения бота для указанного пользователя.
      * @param int $chatId
-     * @param array{last_message_id?: int} $newData Массив данных для обновления, например ['last_message_id' => 123]
-     * @return void
+     * @return int|null
      */
-    public function updateStorage(int $chatId, array $newData): void;
+    public function getLastMessageId(int $chatId): ?int;
 
     /**
-     * Сохраняет данные пользователей в JSON-файл.
-     * @param array $data
+     * Возвращает список MAC-адресов избранных устройств.
+     * @return array
+     */
+    public function getFavMacs(): array;
+
+    /**
+     * Сохраняет ID последнего сообщения бота для указанного пользователя.
+     * @param int $chatId
+     * @param int $messageId
      * @return void
      */
-    public function saveStorage(array $data): void;
+    public function setLastMessageId(int $chatId, int $messageId): void;
 }
