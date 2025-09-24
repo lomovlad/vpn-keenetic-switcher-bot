@@ -31,15 +31,12 @@ class Service
         $input = file_get_contents('php://input');
 
         if (!$input) {
-
             return null;
         }
 
         try {
-
             return Update::fromJson($input);
         } catch (TelegramParseResultException) {
-
             return null;
         }
     }
